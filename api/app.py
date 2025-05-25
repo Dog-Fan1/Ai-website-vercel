@@ -1,35 +1,49 @@
 from flask import Flask, request, jsonify, session, send_from_directory
 from flask_cors import CORS
-from werkzeug.security import generate_password_hash, check_password_hash
-import shelve
 import os
 import requests
 import uuid
+import psycopg2
+import psycopg2.extras
 
-app = Flask(__name__, static_folder="../static")  # Vercel: static folder is one up
+app = Flask(__name__, static_folder="../static")
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
 app.config['SESSION_COOKIE_SAMESITE'] = "None"
 app.config['SESSION_COOKIE_SECURE'] = True
 CORS(app, supports_credentials=True)
 
-USER_DB = "users.db"
-CHATS_DB = "chats.db"
+# Connect to Postgres (Vercel Postgres, Neon, etc.)
+def get_db():
+    return psycopg2.connect(os.environ["DATABASE_URL"], cursor_factory=psycopg2.extras.RealDictCursor)
 
-def get_user(username):
-    with shelve.open(USER_DB) as db:
-        return db.get(username)
+def init_db():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        username TEXT PRIMARY KEY,
+        password TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS chats (
+        chat_id UUID PRIMARY KEY,
+        username TEXT NOT NULL,
+        created TIMESTAMP DEFAULT now()
+    );
+    CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY,
+        chat_id UUID NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created TIMESTAMP DEFAULT now()
+    );
+    """)
+    conn.commit()
+    cur.close()
+    conn.close()
 
-def save_user(username, password_hash):
-    with shelve.open(USER_DB, writeback=True) as db:
-        db[username] = password_hash
-
-def get_user_chats(username):
-    with shelve.open(CHATS_DB) as db:
-        return db.get(username, {})
-
-def save_user_chats(username, chats):
-    with shelve.open(CHATS_DB, writeback=True) as db:
-        db[username] = chats
+@app.before_first_request
+def setup():
+    init_db()
 
 @app.route("/", methods=["GET"])
 def root():
@@ -46,14 +60,19 @@ def signup():
     password = data.get("password")
     if not username or not password:
         return jsonify({"error": "Username and password required"}), 400
-    if get_user(username):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users WHERE username=%s", (username,))
+    if cur.fetchone():
+        cur.close()
+        conn.close()
         return jsonify({"error": "User already exists"}), 400
-    password_hash = generate_password_hash(password)
-    save_user(username, password_hash)
-    chats = {}
+    cur.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, password))
     chat_id = str(uuid.uuid4())
-    chats[chat_id] = []
-    save_user_chats(username, chats)
+    cur.execute("INSERT INTO chats (chat_id, username) VALUES (%s, %s)", (chat_id, username))
+    conn.commit()
+    cur.close()
+    conn.close()
     return jsonify({"message": "User created successfully", "chat_id": chat_id})
 
 @app.route("/login", methods=["POST"])
@@ -61,27 +80,46 @@ def login():
     data = request.json
     username = data.get("username")
     password = data.get("password")
-
-    # Admin check
     if username == "Admin" and password == "SiETHOwROltu":
         session["username"] = username
         session["is_admin"] = True
-        chats = get_user_chats(username)
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT chat_id FROM chats WHERE username=%s", (username,))
+        chats = cur.fetchall()
+        if not chats:
+            chat_id = str(uuid.uuid4())
+            cur.execute("INSERT INTO chats (chat_id, username) VALUES (%s, %s)", (chat_id, username))
+            conn.commit()
+            chats = [{"chat_id": chat_id}]
+        cur.close()
+        conn.close()
         return jsonify({
             "message": "Login successful",
-            "chats": [{"chat_id": cid, "title": chats[cid][0]['content'][:30] if chats[cid] else "New Chat"} for cid in chats],
+            "chats": [{"chat_id": c["chat_id"], "title": "New Chat"} for c in chats],
             "is_admin": True
         })
-
-    password_hash = get_user(username)
-    if not password_hash or not check_password_hash(password_hash, password):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users WHERE username=%s AND password=%s", (username, password))
+    if not cur.fetchone():
+        cur.close()
+        conn.close()
         return jsonify({"error": "Invalid credentials"}), 401
     session["username"] = username
     session["is_admin"] = False
-    chats = get_user_chats(username)
+    cur.execute("SELECT chat_id FROM chats WHERE username=%s", (username,))
+    chats = cur.fetchall()
+    if not chats:
+        chat_id = str(uuid.uuid4())
+        cur.execute("INSERT INTO chats (chat_id, username) VALUES (%s, %s)", (chat_id, username))
+        conn.commit()
+        chats = [{"chat_id": chat_id}]
+    cur.close()
+    conn.close()
     return jsonify({
         "message": "Login successful",
-        "chats": [{"chat_id": cid, "title": chats[cid][0]['content'][:30] if chats[cid] else "New Chat"} for cid in chats],
+        "chats": [{"chat_id": c["chat_id"], "title": "New Chat"} for c in chats],
         "is_admin": False
     })
 
@@ -96,10 +134,13 @@ def new_chat():
     if "username" not in session:
         return jsonify({"error": "Not authenticated"}), 401
     username = session["username"]
-    chats = get_user_chats(username)
     chat_id = str(uuid.uuid4())
-    chats[chat_id] = []
-    save_user_chats(username, chats)
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO chats (chat_id, username) VALUES (%s, %s)", (chat_id, username))
+    conn.commit()
+    cur.close()
+    conn.close()
     return jsonify({"chat_id": chat_id})
 
 @app.route("/chats", methods=["GET"])
@@ -107,34 +148,90 @@ def get_chats():
     if "username" not in session:
         return jsonify({"error": "Not authenticated"}), 401
     username = session["username"]
-    chats = get_user_chats(username)
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT chat_id FROM chats WHERE username=%s", (username,))
+    chats = cur.fetchall()
+    cur.close()
+    conn.close()
     return jsonify({
-        "chats": [{"chat_id": cid, "title": chats[cid][0]['content'][:30] if chats[cid] else "New Chat"} for cid in chats]
+        "chats": [{"chat_id": c["chat_id"], "title": "New Chat"} for c in chats]
     })
 
 @app.route("/history/<chat_id>", methods=["GET"])
 def get_history(chat_id):
-    if "username" not in session:
-        return jsonify({"error": "Not authenticated"}), 401
-    username = session["username"]
-    chats = get_user_chats(username)
-    return jsonify({"history": chats.get(chat_id, [])})
+    if "username" in session:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT role, content FROM messages WHERE chat_id=%s ORDER BY id", (chat_id,))
+        history = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify({"history": history})
+    # Anonymous user: use session
+    if "anon_chat_id" in session and session["anon_chat_id"] == chat_id:
+        return jsonify({"history": session.get("anon_history", [])})
+    return jsonify({"history": []})
 
 @app.route("/chat/<chat_id>", methods=["POST"])
 def chat(chat_id):
-    if "username" not in session:
-        return jsonify({"error": "Not authenticated"}), 401
-    username = session["username"]
-    prompt = request.json.get("prompt", "")
-    chats = get_user_chats(username)
-    if chat_id not in chats:
-        return jsonify({"error": "Chat not found"}), 404
-    chats[chat_id].append({"role": "user", "content": prompt})
+    username = session.get("username")
+    is_authenticated = username is not None
 
-    # Groq Llama-3 API integration (Markdown output)
+    # Anonymous user logic
+    if not is_authenticated:
+        if "anon_chat_id" not in session:
+            session["anon_chat_id"] = str(uuid.uuid4())
+            session["anon_history"] = []
+        anon_chat_id = session["anon_chat_id"]
+        if chat_id != anon_chat_id:
+            return jsonify({"error": "Anonymous users can only use their own chat"}), 403
+        anon_history = session.get("anon_history", [])
+        if len([msg for msg in anon_history if msg["role"] == "user"]) >= 5:
+            return jsonify({"error": "Message limit reached. Please sign up to continue."}), 403
+        prompt = request.json.get("prompt", "")
+        anon_history.append({"role": "user", "content": prompt})
+
+        api_key = os.environ.get("GROQ_API_KEY")
+        messages = [{"role": "system", "content": "You are AmberMind, a warm and insightful AI assistant. Always use Markdown formatting in your responses."}]
+        for msg in anon_history:
+            messages.append({"role": msg["role"], "content": msg["content"]})
+
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama3-70b-8192",
+                "messages": messages,
+                "max_tokens": 500
+            }
+        )
+        if response.status_code != 200:
+            return jsonify({"error": "Groq API error", "details": response.text}), 500
+
+        data = response.json()
+        ai_response = data["choices"][0]["message"]["content"]
+        anon_history.append({"role": "assistant", "content": ai_response})
+        session["anon_history"] = anon_history
+        return jsonify({
+            "response": ai_response,
+            "history": anon_history
+        })
+
+    # Authenticated user logic
+    prompt = request.json.get("prompt", "")
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO messages (chat_id, role, content) VALUES (%s, %s, %s)", (chat_id, "user", prompt))
+    # Get all history for this chat
+    cur.execute("SELECT role, content FROM messages WHERE chat_id=%s ORDER BY id", (chat_id,))
+    history = cur.fetchall()
     api_key = os.environ.get("GROQ_API_KEY")
     messages = [{"role": "system", "content": "You are AmberMind, a warm and insightful AI assistant. Always use Markdown formatting in your responses."}]
-    for msg in chats[chat_id]:
+    for msg in history:
         messages.append({"role": msg["role"], "content": msg["content"]})
 
     response = requests.post(
@@ -150,28 +247,34 @@ def chat(chat_id):
         }
     )
     if response.status_code != 200:
+        cur.close()
+        conn.close()
         return jsonify({"error": "Groq API error", "details": response.text}), 500
 
     data = response.json()
     ai_response = data["choices"][0]["message"]["content"]
-
-    chats[chat_id].append({"role": "assistant", "content": ai_response})
-    save_user_chats(username, chats)
+    cur.execute("INSERT INTO messages (chat_id, role, content) VALUES (%s, %s, %s)", (chat_id, "assistant", ai_response))
+    conn.commit()
+    cur.execute("SELECT role, content FROM messages WHERE chat_id=%s ORDER BY id", (chat_id,))
+    history = cur.fetchall()
+    cur.close()
+    conn.close()
     return jsonify({
         "response": ai_response,
-        "history": chats[chat_id]
+        "history": history
     })
 
 @app.route("/admin", methods=["GET"])
 def admin_panel():
     if session.get("is_admin"):
-        with shelve.open(USER_DB) as users, shelve.open(CHATS_DB) as chats:
-            user_list = list(users.keys())
-            chat_stats = {u: len(chats.get(u, {})) for u in user_list}
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM users")
+        user_list = [row["username"] for row in cur.fetchall()]
+        cur.execute("SELECT username, COUNT(*) as count FROM chats GROUP BY username")
+        chat_stats = {row["username"]: row["count"] for row in cur.fetchall()}
+        cur.close()
+        conn.close()
         return jsonify({"users": user_list, "chat_stats": chat_stats})
     else:
         return jsonify({"error": "Not authorized"}), 403
-
-# Vercel expects a variable named "app"
-
-# No need for if __name__ == "__main__" block on Vercel
