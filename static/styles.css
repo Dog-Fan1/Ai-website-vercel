@@ -6,6 +6,25 @@ body {
   font-family: 'Segoe UI', Arial, sans-serif;
 }
 
+.notification {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffb347;
+  color: #fff;
+  font-weight: bold;
+  padding: 1em 2em;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(255,179,71,0.20);
+  z-index: 9999;
+  font-size: 1.2em;
+  transition: opacity 0.3s;
+}
+.notification.error {
+  background: #ff6f61;
+}
+
 .main-layout {
   display: flex;
   min-height: 100vh;
