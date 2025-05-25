@@ -1,13 +1,27 @@
 {
+  "builds": [
+    {
+      "src": "api/app.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "static/**",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "static"
+      }
+    }
+  ],
   "rewrites": [
-    { "source": "/login", "destination": "/api/app.py" },
-    { "source": "/signup", "destination": "/api/app.py" },
-    { "source": "/logout", "destination": "/api/app.py" },
-    { "source": "/new_chat", "destination": "/api/app.py" },
-    { "source": "/chats", "destination": "/api/app.py" },
-    { "source": "/history/:chat_id", "destination": "/api/app.py" },
-    { "source": "/chat/:chat_id", "destination": "/api/app.py" },
-    { "source": "/admin", "destination": "/api/app.py" },
-    { "source": "/static/(.*)", "destination": "/static/index.html" }
+    { "source": "/api/login", "destination": "/api/app.py" },
+    { "source": "/api/signup", "destination": "/api/app.py" },
+    { "source": "/api/logout", "destination": "/api/app.py" },
+    { "source": "/api/new_chat", "destination": "/api/app.py" },
+    { "source": "/api/chats", "destination": "/api/app.py" },
+    { "source": "/api/history/:chat_id", "destination": "/api/app.py" },
+    { "source": "/api/chat/:chat_id", "destination": "/api/app.py" },
+    { "source": "/api/admin", "destination": "/api/app.py" },
+    { "source": "/static/(.*)", "destination": "/static/$1" },
+    { "source": "/(.*)", "destination": "/static/index.html" }
   ]
 }
