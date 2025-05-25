@@ -4,6 +4,16 @@ let currentUsername = null;
 let hasChatted = false;
 let isAdmin = false;
 
+function showNotification(message, isError = false) {
+  const notif = document.getElementById('notification');
+  notif.textContent = message;
+  notif.className = 'notification' + (isError ? ' error' : '');
+  notif.style.display = 'block';
+  setTimeout(() => {
+    notif.style.display = 'none';
+  }, 2500);
+}
+
 function renderHistory(history) {
   const chatDiv = document.getElementById('chatHistory');
   chatDiv.innerHTML = '';
@@ -86,6 +96,8 @@ document.getElementById('signupBtn').onclick = function() {
   .then(r => r.json())
   .then(data => {
     document.getElementById('signup-result').textContent = data.message || data.error;
+    if (data.message) showNotification(data.message);
+    if (data.error) showNotification(data.error, true);
     if (data.chat_id) {
       currentChatId = data.chat_id;
       currentUsername = document.getElementById('signup-username').value;
@@ -111,6 +123,8 @@ document.getElementById('loginBtn').onclick = function() {
   .then(r => r.json())
   .then(data => {
     document.getElementById('login-result').textContent = data.message || data.error;
+    if (data.message) showNotification(data.message);
+    if (data.error) showNotification(data.error, true);
     if (data.chats && data.chats.length > 0) {
       currentChatId = data.chats[0].chat_id;
       currentUsername = document.getElementById('login-username').value;
@@ -159,6 +173,10 @@ function sendPrompt() {
   })
   .then(r => r.json())
   .then(data => {
+    if (data.error) {
+      showNotification(data.error, true);
+      return;
+    }
     hasChatted = true;
     hideGreeting();
     renderHistory(data.history);
@@ -173,6 +191,7 @@ document.getElementById('logoutBtn').onclick = function() {
     credentials: 'include'
   }).then(r => r.json())
   .then(data => {
+    showNotification(data.message);
     document.getElementById('promptInput').disabled = true;
     document.getElementById('chatBtn').disabled = true;
     document.getElementById('logoutBtn').disabled = true;
