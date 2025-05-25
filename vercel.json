@@ -8,7 +8,6 @@
     { "source": "/history/:chat_id", "destination": "/api/app.py" },
     { "source": "/chat/:chat_id", "destination": "/api/app.py" },
     { "source": "/admin", "destination": "/api/app.py" },
-    { "source": "/static/(.*)", "destination": "/static/$1" },
-    { "source": "/(.*)", "destination": "/static/index.html" }
+    { "source": "/static/(.*)", "destination": "/static/$1" }
   ]
 }
