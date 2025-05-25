@@ -4,8 +4,6 @@
       "src": "api/app.py",
       "use": "@vercel/python",
       "config": {
-        // Ensure requirements.txt is in api/ as discussed
-        // The installCommand is usually automatic but good to be clear if needed
         "installCommand": "pip install -r api/requirements.txt"
       }
     }
