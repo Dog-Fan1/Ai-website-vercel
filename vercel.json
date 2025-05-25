@@ -8,9 +8,7 @@
     { "source": "/history/:chat_id", "destination": "/api/app.py" },
     { "source": "/chat/:chat_id", "destination": "/api/app.py" },
     { "source": "/admin", "destination": "/api/app.py" },
-    // Serve static assets (optional, Vercel does this by default)
     { "source": "/static/(.*)", "destination": "/static/$1" },
-    // Fallback for SPA (optional)
     { "source": "/(.*)", "destination": "/static/index.html" }
   ]
 }
