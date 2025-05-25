@@ -12,13 +12,13 @@ app.config['SESSION_COOKIE_SAMESITE'] = "None"
 app.config['SESSION_COOKIE_SECURE'] = True
 CORS(app, supports_credentials=True)
 
-# Connect to Postgres (Vercel Postgres, Neon, etc.)
 def get_db():
     return psycopg2.connect(os.environ["DATABASE_URL"], cursor_factory=psycopg2.extras.RealDictCursor)
 
 def init_db():
     conn = get_db()
     cur = conn.cursor()
+    # Create tables if they don't exist
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
         username TEXT PRIMARY KEY,
