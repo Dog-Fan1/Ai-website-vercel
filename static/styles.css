@@ -1,0 +1,243 @@
+body {
+  background: linear-gradient(135deg, #fff5e1 0%, #ffe0d1 100%);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.main-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 320px;
+  background: #fff1e0;
+  border-right: 2px solid #ffd6a0;
+  display: flex;
+  flex-direction: column;
+  padding: 2em 1em 1em 1em;
+  box-sizing: border-box;
+}
+
+.ai-name {
+  font-size: 1.3em;
+  font-weight: bold;
+  color: #ffb347;
+  margin-bottom: 1em;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.auth-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5em;
+}
+
+.auth-card {
+  background: #ffe6c7;
+  border-radius: 14px;
+  padding: 1em 1em;
+  box-shadow: 0 2px 8px rgba(255, 140, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.auth-card h2 {
+  margin-bottom: 0.7em;
+  color: #ffb347;
+  font-size: 1.1em;
+}
+
+input[type="text"], input[type="password"] {
+  width: 90%;
+  padding: 0.6em;
+  margin-bottom: 0.5em;
+  font-size: 1em;
+  border: 1px solid #ffd6a0;
+  border-radius: 6px;
+  background: #fffaf2;
+  transition: border 0.2s;
+}
+
+input[type="text"]:focus, input[type="password"]:focus {
+  border: 1.5px solid #ffb347;
+  outline: none;
+}
+
+button {
+  padding: 0.4em 1em;
+  font-size: 1em;
+  margin: 0.2em 0.3em 0.2em 0;
+  background: #ffb347;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+
+button:disabled {
+  background: #ffd6a0;
+  cursor: not-allowed;
+}
+
+.chats-section {
+  margin-top: 2em;
+}
+
+.chats-section h3 {
+  color: #b95e00;
+  margin-bottom: 0.5em;
+}
+
+#chatList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+#chatList li {
+  background: #fffaf2;
+  margin-bottom: 0.3em;
+  padding: 0.6em 1em;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #b95e00;
+  transition: background 0.2s;
+  border: 2px solid transparent;
+}
+
+#chatList li.selected, #chatList li:hover {
+  background: #ffebd6;
+  border: 2px solid #ffb347;
+}
+
+.admin-tab {
+  background: #fff3e6;
+  border-radius: 10px;
+  margin-top: 2em;
+  padding: 1em;
+  color: #b95e00;
+  font-size: 1em;
+  box-shadow: 0 2px 8px rgba(255, 140, 0, 0.06);
+}
+
+.chat-container {
+  flex: 1;
+  max-width: 900px;
+  margin: 3vw auto 0 auto;
+  background: #fffaf6;
+  border-radius: 20px;
+  box-shadow: 0 4px 32px rgba(255, 140, 0, 0.08);
+  padding: 2em 2em 2em 2em;
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.greeting-header {
+  color: #ffb347;
+  margin-bottom: 1em;
+  font-size: 2em;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.chat-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chat-history {
+  background: #fffaf2;
+  padding: 1.2em;
+  border-radius: 12px;
+  margin-bottom: 1em;
+  font-size: 1.15em;
+  color: #6d3b00;
+  box-shadow: 0 2px 8px rgba(255,140,0,0.07);
+  width: 100%;
+  max-width: 700px;
+  min-height: 340px;
+  max-height: 340px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-input-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+#promptInput {
+  flex: 1;
+  margin-right: 0.5em;
+  font-size: 1.1em;
+  min-height: 2.5em;
+  max-height: 8em;
+  resize: vertical;
+  border-radius: 6px;
+  border: 1px solid #ffd6a0;
+  background: #fffaf2;
+  padding: 0.5em;
+  transition: border 0.2s;
+}
+#promptInput:focus {
+  border: 1.5px solid #ffb347;
+  outline: none;
+}
+
+.user-msg {
+  color: #b95e00;
+  font-weight: bold;
+  margin-bottom: 0.3em;
+  align-self: flex-end;
+  text-align: right;
+}
+
+.assistant-msg {
+  color: #6d3b00;
+  margin-bottom: 1em;
+  align-self: flex-start;
+  text-align: left;
+}
+
+@media (max-width: 900px) {
+  .main-layout {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100vw;
+    border-right: none;
+    border-bottom: 2px solid #ffd6a0;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1em 0.5em;
+  }
+  .chat-container {
+    max-width: 98vw;
+    padding: 1.5em 0.5em;
+  }
+  .chat-history {
+    max-width: 96vw;
+  }
+  #promptInput {
+    width: 90%;
+  }
+}
