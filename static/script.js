@@ -1,4 +1,4 @@
-const API_BASE = '';
+const API_BASE = '/api';
 let currentChatId = null;
 let currentUsername = null;
 let hasChatted = false;
