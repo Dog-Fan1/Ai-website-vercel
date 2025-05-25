@@ -10,6 +10,12 @@
     }
   ],
   "routes": [
+    // Direct mapping for root, and specific static assets from the static folder
+    { "src": "/", "dest": "/static/index.html" },
+    { "src": "/styles.css", "dest": "/static/styles.css" },
+    { "src": "/script.js", "dest": "/static/script.js" },
+    { "src": "/favicon.ico", "dest": "/static/favicon.ico" }, // Add this if you have a favicon
+    { "src": "/static/(.*)", "dest": "/static/$1" }, // General rule for /static/assets
     { "src": "/api/login", "dest": "/api/app.py" },
     { "src": "/api/signup", "dest": "/api/app.py" },
     { "src": "/api/logout", "dest": "/api/app.py" },
@@ -18,7 +24,6 @@
     { "src": "/api/history/(?<chat_id>[^/]+)", "dest": "/api/app.py" },
     { "src": "/api/chat/(?<chat_id>[^/]+)", "dest": "/api/app.py" },
     { "src": "/api/admin", "dest": "/api/app.py" },
-    { "src": "/(.*)", "dest": "/static/$1" }
-  ],
-  "outputDirectory": "static"
+    { "src": "/(.*)", "dest": "/static/index.html" }
+  ]
 }
