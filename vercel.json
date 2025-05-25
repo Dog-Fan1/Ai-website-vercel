@@ -11,6 +11,22 @@
   ],
   "routes": [
     {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/",
+      "dest": "/static/index.html"
+    },
+    {
+      "src": "/styles.css",
+      "dest": "/static/styles.css"
+    },
+    {
+      "src": "/script.js",
+      "dest": "/static/script.js"
+    },
+    {
       "src": "/api/login",
       "dest": "/api/app.py"
     },
@@ -41,14 +57,6 @@
     {
       "src": "/api/admin",
       "dest": "/api/app.py"
-    },
-    {
-      "src": "/styles.css",
-      "dest": "/static/styles.css"
-    },
-    {
-      "src": "/script.js",
-      "dest": "/static/script.js"
     },
     {
       "src": "/(.*)",
