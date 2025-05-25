@@ -1,4 +1,5 @@
 {
+  "version": 2,
   "builds": [
     {
       "src": "api/app.py",
@@ -8,19 +9,50 @@
       }
     }
   ],
-  "rewrites": [
-    { "source": "/api/login", "destination": "/api/app.py" },
-    { "source": "/api/signup", "destination": "/api/app.py" },
-    { "source": "/api/logout", "destination": "/api/app.py" },
-    { "source": "/api/new_chat", "destination": "/api/app.py" },
-    { "source": "/api/chats", "destination": "/api/app.py" },
-    { "source": "/api/history/:chat_id", "destination": "/api/app.py" },
-    { "source": "/api/chat/:chat_id", "destination": "/api/app.py" },
-    { "source": "/api/admin", "destination": "/api/app.py" },
-    { "source": "/styles.css", "destination": "/static/styles.css" },
-    { "source": "/script.js", "destination": "/static/script.js" },
-    { "source": "/favicon.ico", "destination": "/static/favicon.ico" },
-    { "source": "/", "destination": "/static/index.html" },
-    { "source": "/(.*)", "destination": "/static/index.html" }
+  "routes": [
+    {
+      "src": "/api/login",
+      "dest": "/api/app.py"
+    },
+    {
+      "src": "/api/signup",
+      "dest": "/api/app.py"
+    },
+    {
+      "src": "/api/logout",
+      "dest": "/api/app.py"
+    },
+    {
+      "src": "/api/new_chat",
+      "dest": "/api/app.py"
+    },
+    {
+      "src": "/api/chats",
+      "dest": "/api/app.py"
+    },
+    {
+      "src": "/api/history/(?<chat_id>[^/]+)",
+      "dest": "/api/app.py"
+    },
+    {
+      "src": "/api/chat/(?<chat_id>[^/]+)",
+      "dest": "/api/app.py"
+    },
+    {
+      "src": "/api/admin",
+      "dest": "/api/app.py"
+    },
+    {
+      "src": "/styles.css",
+      "dest": "/static/styles.css"
+    },
+    {
+      "src": "/script.js",
+      "dest": "/static/script.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/static/index.html"
+    }
   ]
 }
