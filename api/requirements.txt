@@ -1,5 +1,4 @@
 flask
 flask_cors
-werkzeug
-gunicorn
+psycopg2-binary
 requests
