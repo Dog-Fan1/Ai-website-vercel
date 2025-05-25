@@ -2,13 +2,11 @@
   "builds": [
     {
       "src": "api/app.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "static/**",
-      "use": "@vercel/static-build",
+      "use": "@vercel/python",
       "config": {
-        "distDir": "static"
+        // Ensure requirements.txt is in api/ as discussed
+        // The installCommand is usually automatic but good to be clear if needed
+        "installCommand": "pip install -r api/requirements.txt"
       }
     }
   ],
@@ -21,7 +19,10 @@
     { "source": "/api/history/:chat_id", "destination": "/api/app.py" },
     { "source": "/api/chat/:chat_id", "destination": "/api/app.py" },
     { "source": "/api/admin", "destination": "/api/app.py" },
-    { "source": "/static/(.*)", "destination": "/static/$1" },
+    { "source": "/styles.css", "destination": "/static/styles.css" },
+    { "source": "/script.js", "destination": "/static/script.js" },
+    { "source": "/favicon.ico", "destination": "/static/favicon.ico" },
+    { "source": "/", "destination": "/static/index.html" },
     { "source": "/(.*)", "destination": "/static/index.html" }
   ]
 }
