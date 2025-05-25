@@ -1,4 +1,5 @@
-const API_BASE = '/api';
+const API_BASE = '';
+
 let currentChatId = null;
 let currentUsername = null;
 let hasChatted = false;
@@ -150,14 +151,10 @@ const promptInput = document.getElementById('promptInput');
 promptInput.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') {
     if (e.shiftKey) {
-      // Shift+Enter: send
       e.preventDefault();
       if (!promptInput.disabled && !document.getElementById('chatBtn').disabled) {
         sendPrompt();
       }
-    } else {
-      // Enter: newline
-      // Let the default behavior happen (insert newline)
     }
   }
 });
